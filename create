@@ -56,11 +56,11 @@ fi
 DEVICE_SIZE=$(blockdev --getsize64 $blockdev)
 
 # Compute the missing size.
-if [ "OSP_ROOT_SIZE" -eq "0" ]; then
+if [ "$OSP_ROOT_SIZE" -eq "0" ]; then
     OSP_ROOT_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_SWAP_SIZE-OSP_VAR_SIZE))
-elif [ "OSP_SWAP_SIZE" -eq "0" ]; then
+elif [ "$OSP_SWAP_SIZE" -eq "0" ]; then
     OSP_SWAP_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_VAR_SIZE))
-elif [ "OSP_VAR_SIZE" -eq "0" ]; then
+elif [ "$OSP_VAR_SIZE" -eq "0" ]; then
     OSP_VAR_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_SWAP_SIZE))
 fi
 
