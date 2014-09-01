@@ -106,7 +106,7 @@ format_disk0() {
   VAR_START=$((SWAP_END+1))
   VAR_END=$((VAR_START+OSP_VAR_SIZE*ONE_MIB-1))
 
-  cat <<EOF
+  $PARTED -s $blockdev <<EOF
 mklabel $PARTITION_STYLE
 unit B
 mkpart primary $ROOT_START $ROOT_END
@@ -115,10 +115,10 @@ mkpart primary $SWAP_START $SWAP_END
 mkpart primary $VAR_START $VAR_END
 EOF
 
-  $PARTED -s $blockdev mklabel $PARTITION_STYLE
-  $PARTED -s $blockdev unit B mkpart primary $ROOT_START $ROOT_END set 1 boot on
-  $PARTED -s $blockdev unit B mkpart primary $SWAP_START $SWAP_END
-  $PARTED -s $blockdev unit B mkpart primary $VAR_START $VAR_END
+ # $PARTED -s $blockdev mklabel $PARTITION_STYLE
+ # $PARTED -s $blockdev unit B mkpart primary $ROOT_START $ROOT_END set 1 boot on
+ # $PARTED -s $blockdev unit B mkpart primary $SWAP_START $SWAP_END
+ # $PARTED -s $blockdev unit B mkpart primary $VAR_START $VAR_END
 }
 
 map_disk0() {
