@@ -33,17 +33,21 @@ if [ ! -b $blockdev ]; then
 fi
 
 if [ "$PARTITION_STYLE" = "none" ]; then
-  filesystem_dev=$blockdev
+  rootdev=$blockdev
 elif [ "$PARTITION_STYLE" = "msdos" ]; then
-  filesystem_dev=$(map_disk0 $blockdev)
+  eval $(map_disk0 $blockdev)
   CLEANUP+=("unmap_disk0 $blockdev")
 else
   echo "Unknown partition style $PARTITION_STYLE"
   exit 1
 fi
 
-mount $filesystem_dev $TMPDIR
+mount $rootdev $TMPDIR
 CLEANUP+=("umount $TMPDIR")
+
+mount $vardev $TMPDIR/var
+CLEANUP+=("umount $TMPDIR/var")
+
 
 HNAME="$TMPDIR/etc/hostname"
 MNAME="$TMPDIR/etc/mailname"

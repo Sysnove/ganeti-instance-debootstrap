@@ -80,3 +80,15 @@ CLEAN_CACHE="14"
 # SSDs), feel free to increase it if your media has even bigger
 # allocation blocks
 # PARTITION_ALIGNMENT=2048
+
+# ROOT_MIN_SIZE: the minimal size of the root filesystem, in MiB, defaults to
+# 5GiB.
+# ROOT_MIN_SIZE=5120
+
+# SWAP_MIN_SIZE: the minimal size of the swap, in MiB, defaults to 1GiB
+# SWAP_MIN_SIZE=1024
+
+# VAR_MIN_SIZE: the minimal size of the var filesystem, in MiB, defaults to
+# 100MiB.
+# VAR_MIN_SIZE=100
+

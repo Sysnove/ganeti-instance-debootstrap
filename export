@@ -29,24 +29,8 @@ if [ ! -b $blockdev ]; then
   CLEANUP+=("losetup -d $blockdev")
 fi
 
-if [ "$PARTITION_STYLE" = "none" ]; then
-  filesystem_dev=$blockdev
-elif [ "$PARTITION_STYLE" = "msdos" ]; then
-  filesystem_dev=$(map_disk0 $blockdev)
-  CLEANUP+=("unmap_disk0 $blockdev")
-else
-  echo "Unknown partition style $PARTITION_STYLE"
-  exit 1
-fi
-
-vol_type=$($VOL_TYPE $filesystem_dev)
-
-if [ "${vol_type:0:3}" = "ext" ]; then
-  dump -0 -q -f - "$filesystem_dev"
-else
-  echo "Can't dump partition of type ${vol_type}!" >&2
-  exit 1
-fi
+# Exports block device
+dd if=$blockdev bs=1024
 
 # execute cleanups
 cleanup

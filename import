@@ -29,51 +29,8 @@ if [ ! -b $blockdev ]; then
   CLEANUP+=("losetup -d $blockdev")
 fi
 
-if [ "$PARTITION_STYLE" = "none" ]; then
-  filesystem_dev=$blockdev
-elif [ "$PARTITION_STYLE" = "msdos" ]; then
-  # Create one big partition, and make it bootable
-  format_disk0 $blockdev
-  filesystem_dev=$(map_disk0 $blockdev)
-  CLEANUP+=("unmap_disk0 $blockdev")
-else
-  echo "Unknown partition style $PARTITION_STYLE"
-  exit 1
-fi
-
-mke2fs -Fjq $filesystem_dev
-root_uuid=$($VOL_ID $filesystem_dev )
-
-if [ -n "$swapdev" ]; then
-  mkswap $swapdev
-  swap_uuid=$($VOL_ID $swapdev || true )
-fi
-
-TMPDIR=`mktemp -d` || exit 1
-CLEANUP+=("rmdir $TMPDIR")
-
-mount $filesystem_dev $TMPDIR
-CLEANUP+=("umount $TMPDIR")
-
-( cd $TMPDIR; restore -r -y -f - )
-rm -f $TMPDIR/etc/udev/rules.d/z*_persistent-net.rules
-
-# Fix /etc/fstab with the new volumes' UUIDs
-if [ -e $TMPDIR/etc/fstab ]; then
-  ROOT_LINE="UUID=$root_uuid  /     ext3  defaults  0  1"
-  if [ -n "$swapdev" -a -n "$swap_uuid" ]; then
-    SWAP_LINE="UUID=$swap_uuid  swap  swap  defaults  0  0"
-    cat $TMPDIR/etc/fstab | \
-      sed -re "s#^(/dev/sda|UUID=[a-f0-9-]+)\s+/\s+.*\$#$ROOT_LINE#" \
-          -e "s#^(/dev/sdb|UUID=[a-f0-9-]+)\s+swap\s+.*\$#$SWAP_LINE#" \
-      > $TMPDIR/etc/fstab.new
-  else
-    cat $TMPDIR/etc/fstab | \
-      sed -re "s#^(/dev/sda|UUID=[a-f0-9-]+)\s+/\s+.*\$#$ROOT_LINE#" \
-      > $TMPDIR/etc/fstab.new
-  fi
-  mv $TMPDIR/etc/fstab.new  $TMPDIR/etc/fstab
-fi
+# Imports the block device.
+dd of=$blockdev bs=1024
 
 # execute cleanups
 cleanup

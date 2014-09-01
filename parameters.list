@@ -1,1 +1,6 @@
-filesystem The filesystem type to use for the root partition. This has to be a filesystem type supported by ``mke2fs``. The default is 'ext4'.
+root_fs The filesystem type for the root device.
+root_size The root device size in MiB.
+swap_size The SWAP size, in MiB.
+var_fs The filesystem type for the var device.
+var_size The var device size, in MiB.
+

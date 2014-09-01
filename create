@@ -19,10 +19,6 @@
 
 set -e
 
-# minimum device size is 256 MB, but we use 255 to account for
-# potential rounding
-declare -ri MIN_DEV_SIZE=$((255*1048576))
-
 . common.sh
 
 if [ "$GENERATE_CACHE" = "yes" -a ! -d "$CACHE_DIR" ]; then
@@ -40,10 +36,31 @@ if [ ! -b $blockdev ]; then
   CLEANUP+=("losetup -d $blockdev")
 fi
 
+check_empty_sizes
+
+# Find device size.
 DEVICE_SIZE=$(blockdev --getsize64 $blockdev)
+
+# Compute the missing size.
+if [ -z "OSP_ROOT_SIZE" ]; then
+    OSP_ROOT_SIZE=$((DEVICE_SIZE/ONE_MIB-SWAP_SIZE-VAR_SIZE))
+elif [ -z "OSP_SWAP_SIZE" ]; then
+    OSP_SWAP_SIZE=$((DEVICE_SIZE/ONE_MIB-ROOT_SIZE-VAR_SIZE))
+elif [ -z "OSP_VAR_SIZE" ]; then
+    OSP_VAR_SIZE=$((DEVICE_SIZE/ONE_MIB-ROOT_SIZE-SWAP_SIZE))
+fi
+
+check_minimal_sizes
+
+# Check minimum disk size.
+
+# PARTITION_ALIGNMENT is in sectors, converting it to bytes.
+PA_BYTES=$((PARTITION_ALIGNMENT*512))
+declare -ri MIN_DEV_SIZE=$((PA_BYTES+(OSP_ROOT_FS+OSP_SWAP_SIZE+OSP_VAR_SIZE)*ONE_MIB))
+
 if [ "$DEVICE_SIZE" -lt $MIN_DEV_SIZE ]; then
-  echo "Device size is too small ($((DEVICE_SIZE/1048576)) MB)" 1>&2
-  echo "Required size is at least 256MB" 1>&2
+  echo "Device size is too small ($((DEVICE_SIZE/ONE_MIB))MiB)" 1>&2
+  echo "Required size is at least $((MIN_DEV_SIZE/ONE_MIB))MiB" 1>&2
   exit 1
 fi
 
@@ -52,26 +69,38 @@ if [ "$PARTITION_STYLE" = "none" ]; then
 elif [ "$PARTITION_STYLE" = "msdos" ]; then
   # Create one big partition, and make it bootable
   format_disk0 $blockdev
-  filesystem_dev=$(map_disk0 $blockdev)
+  eval $(map_disk0 $blockdev)
   CLEANUP+=("unmap_disk0 $blockdev")
+elif [ "$PARTITION_STYLE" = "gpt" ]; then
+    # Check if root_path is set to /dev/vda2 (or /dev/xvda2 for xen)
+    echo "gpt label is not supported yet."
+    exit 1
 else
   echo "Unknown partition style $PARTITION_STYLE" 1>&2
   exit 1
 fi
 
-mke2fs -Fjqt $OSP_FILESYSTEM $filesystem_dev
-root_uuid=$($VOL_ID $filesystem_dev )
+# Prepare failesystems
+mkfs.$OSP_ROOT_FS $rootdev
+root_uuid=$($VOL_ID $rootdev )
 
-if [ -n "$swapdev" ]; then
-  mkswap $swapdev
-  swap_uuid=$($VOL_ID $swapdev || true )
-fi
+mkswap $swapdev
+swap_uuid=$($VOL_ID $swapdev )
 
+mkfs.$OSP_VAR_FS $vardev
+var_uuid=$($VOL_ID $vardev )
+
+# Mount filesystems
 TMPDIR=`mktemp -d` || exit 1
 CLEANUP+=("rmdir $TMPDIR")
 
-mount $filesystem_dev $TMPDIR
+mount $rootdev $TMPDIR
 CLEANUP+=("umount $TMPDIR")
+
+mkdir $TMPDIR/var
+
+mount $vardev $TMPDIR/var
+CLEAN_CACHE+=("umount $TMPDIR/var")
 
 # remove the cache file if it's old (> 2 weeks) and writable by the owner (the
 # default due to the standard umask)
@@ -125,12 +154,10 @@ cat > $TMPDIR/etc/fstab <<EOF
 # /etc/fstab: static file system information.
 #
 # <file system>   <mount point>   <type>  <options>       <dump>  <pass>
-UUID=$root_uuid   /               $OSP_FILESYSTEM    defaults        0       1
-proc              /proc           proc    defaults        0       0
-EOF
-
-[ -n "$swapdev" -a -n "$swap_uuid" ] && cat >> $TMPDIR/etc/fstab <<EOF
+UUID=$root_uuid   /               $OSP_ROOT_FS    defaults        0       1
 UUID=$swap_uuid   swap            swap    defaults        0       0
+UUID=$var_uuid    /var            $OSP_VAR_FS    defaults        0       0
+proc              /proc           proc    defaults        0       0
 EOF
 
 cat > $TMPDIR/etc/network/interfaces <<EOF

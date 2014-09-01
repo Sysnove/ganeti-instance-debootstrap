@@ -19,14 +19,22 @@
 
 set -e
 
-case $OSP_FILESYSTEM in
-  ""|"ext2"|"ext3"|"ext4")
-    ;;
-  *)
-    echo "Invalid value '$OSP_FILESYSTEM' for the filesystem parameter" 1>&2
+. common.sh
+
+# Check if each OSP_*_FS is valid.
+if [ ! -x "/usr/bin/mkfs.$OSP_ROOT_FS" ]; then
+    echo "Invalid root_fs: the command /usr/bin/mkfs.$OSP_ROOT_FS does not exist."
     exit 1
-    ;;
-esac
+fi
+
+if [ ! -x "/usr/bin/mkfs.$OSP_VAR_FS" ]; then
+    echo "Invalid var_fs: the command /usr/bin/mkfs.$OSP_VAR_FS does not exist."
+    exit 1
+fi
+
+check_empty_sizes
+
+check_minimal_sizes
 
 exit 0
 
