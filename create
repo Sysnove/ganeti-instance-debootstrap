@@ -21,8 +21,6 @@ set -e
 
 . common.sh
 
-env > /tmp/create.env
-
 if [ "$GENERATE_CACHE" = "yes" -a ! -d "$CACHE_DIR" ]; then
   mkdir -p "$CACHE_DIR"
 fi
@@ -69,21 +67,21 @@ fi
 # Check minimal sizes
 if [ -n "$OSP_ROOT_SIZE" ]; then
   if [ "$OSP_ROOT_SIZE" -lt "$ROOT_MIN_SIZE" ]; then
-    echo "root FS size must be greater than ${ROOT_MIN_SIZE}MiB."
+    echo "root FS size (${OSP_ROOT_SIZE}MiB) must be greater than ${ROOT_MIN_SIZE}MiB."
     exit 1
   fi
 fi
 
 if [ -n "$OSP_SWAP_SIZE" ]; then
   if [ "$OSP_SWAP_SIZE" -lt "$SWAP_MIN_SIZE" ]; then
-    echo "swap size must be greater than ${SWAP_MIN_SIZE}MiB."
+    echo "swap size (${OSP_SWAP_SIZE}MiB) must be greater than ${SWAP_MIN_SIZE}MiB."
     exit 1
   fi
 fi
 
 if [ -n "$OSP_VAR_SIZE" ]; then
   if [ "$OSP_VAR_SIZE" -lt "$VAR_MIN_SIZE" ]; then
-    echo "var FS size must be greater than ${VAR_MIN_SIZE}MiB."
+    echo "var FS size (${OSP_VAR_SIZE}MiB) must be greater than ${VAR_MIN_SIZE}MiB."
     exit 1
   fi
 fi
