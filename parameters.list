@@ -3,4 +3,3 @@ root_size The root device size in MiB.
 swap_size The SWAP size, in MiB.
 var_fs The filesystem type for the var device.
 var_size The var device size, in MiB.
-
