@@ -21,6 +21,8 @@ set -e
 
 . common.sh
 
+env > /tmp/create.env
+
 if [ "$GENERATE_CACHE" = "yes" -a ! -d "$CACHE_DIR" ]; then
   mkdir -p "$CACHE_DIR"
 fi
@@ -36,7 +38,21 @@ if [ ! -b $blockdev ]; then
   CLEANUP+=("losetup -d $blockdev")
 fi
 
-check_empty_sizes
+# Check is there are more than 2 empty OSP_*_SIZE.
+if [ -z "$OSP_ROOT_SIZE" -a -z "$OSP_SWAP_SIZE" ]; then
+  echo "Only one of root_size and swap_size can be empty."
+  exit 1
+fi
+
+if [ -z "$OSP_ROOT_SIZE" -a -z "$OSP_VAR_SIZE" ]; then
+  echo "Only one of root_size and var_size can be empty."
+  exit 1
+fi
+
+if [ -z "$OSP_SWAP_SIZE" -a -z "$OSP_VAR_SIZE" ]; then
+  echo "Only one of swap_size and var_size can be empty."
+  exit 1
+fi
 
 # Find device size.
 DEVICE_SIZE=$(blockdev --getsize64 $blockdev)
@@ -50,7 +66,21 @@ elif [ -z "OSP_VAR_SIZE" ]; then
     OSP_VAR_SIZE=$((DEVICE_SIZE/ONE_MIB-ROOT_SIZE-SWAP_SIZE))
 fi
 
-check_minimal_sizes
+# Check minimal sizes
+if [ -n "$OSP_ROOT_SIZE" -a "$OSP_ROOT_SIZE" -lt "$ROOT_MIN_SIZE" ]; then
+  echo "root FS size must be greater than ${ROOT_MIN_SIZE}MiB."
+  exit 1
+fi
+
+if [ -n "$OSP_SWAP_SIZE" -a "$OSP_SWAP_SIZE" -lt "$SWAP_MIN_SIZE" ]; then
+  echo "swap size must be greater than ${SWAP_MIN_SIZE}MiB."
+  exit 1
+fi
+
+if [ -n "$OSP_VAR_SIZE" -a "$OSP_VAR_SIZE" -lt "$VAR_MIN_SIZE" ]; then
+  echo "var FS size must be greater than ${VAR_MIN_SIZE}MiB."
+  exit 1
+fi
 
 # Check minimum disk size.
 
