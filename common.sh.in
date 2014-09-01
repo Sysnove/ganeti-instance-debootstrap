@@ -205,7 +205,7 @@ fi
 : ${OSP_ROOT_SIZE:="5120"} # 5GiB
 : ${OSP_SWAP_SIZE:="1024"} # 1GiB
 : ${OSP_VAR_FS:="ext4"}
-: ${OSP_VAR_SIZE:=""} # Rest of disk if empty
+: ${OSP_VAR_SIZE:="0"} # Rest of disk if empty
 : ${ROOT_MIN_SIZE:="5120"} # 5GiB
 : ${SWAP_MIN_SIZE:="1024"} # 1GiB
 : ${VAR_MIN_SIZE:="100"} # 100MiB

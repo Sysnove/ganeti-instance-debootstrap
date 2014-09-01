@@ -37,17 +37,17 @@ if [ ! -b $blockdev ]; then
 fi
 
 # Check is there are more than 2 empty OSP_*_SIZE.
-if [ -z "$OSP_ROOT_SIZE" -a -z "$OSP_SWAP_SIZE" ]; then
+if [ "$OSP_ROOT_SIZE" -eq "0" -a "$OSP_SWAP_SIZE" -eq "0" ]; then
   echo "Only one of root_size and swap_size can be empty."
   exit 1
 fi
 
-if [ -z "$OSP_ROOT_SIZE" -a -z "$OSP_VAR_SIZE" ]; then
+if [ "$OSP_ROOT_SIZE" -eq "0" -a "$OSP_VAR_SIZE" -eq "0" ]; then
   echo "Only one of root_size and var_size can be empty."
   exit 1
 fi
 
-if [ -z "$OSP_SWAP_SIZE" -a -z "$OSP_VAR_SIZE" ]; then
+if [ "$OSP_SWAP_SIZE" -eq "0" -a "$OSP_VAR_SIZE" -eq "0" ]; then
   echo "Only one of swap_size and var_size can be empty."
   exit 1
 fi
@@ -56,34 +56,28 @@ fi
 DEVICE_SIZE=$(blockdev --getsize64 $blockdev)
 
 # Compute the missing size.
-if [ -z "OSP_ROOT_SIZE" ]; then
+if [ "OSP_ROOT_SIZE" -eq "0" ]; then
     OSP_ROOT_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_SWAP_SIZE-OSP_VAR_SIZE))
-elif [ -z "OSP_SWAP_SIZE" ]; then
+elif [ "OSP_SWAP_SIZE" -eq "0" ]; then
     OSP_SWAP_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_VAR_SIZE))
-elif [ -z "OSP_VAR_SIZE" ]; then
+elif [ "OSP_VAR_SIZE" -eq "0" ]; then
     OSP_VAR_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_SWAP_SIZE))
 fi
 
 # Check minimal sizes
-if [ -n "$OSP_ROOT_SIZE" ]; then
-  if [ "$OSP_ROOT_SIZE" -lt "$ROOT_MIN_SIZE" ]; then
-    echo "root FS size (${OSP_ROOT_SIZE}MiB) must be greater than ${ROOT_MIN_SIZE}MiB."
-    exit 1
-  fi
+if [ "$OSP_ROOT_SIZE" -lt "$ROOT_MIN_SIZE" ]; then
+  echo "root FS size (${OSP_ROOT_SIZE}MiB) must be greater than ${ROOT_MIN_SIZE}MiB."
+  exit 1
 fi
 
-if [ -n "$OSP_SWAP_SIZE" ]; then
-  if [ "$OSP_SWAP_SIZE" -lt "$SWAP_MIN_SIZE" ]; then
-    echo "swap size (${OSP_SWAP_SIZE}MiB) must be greater than ${SWAP_MIN_SIZE}MiB."
-    exit 1
-  fi
+if [ "$OSP_SWAP_SIZE" -lt "$SWAP_MIN_SIZE" ]; then
+  echo "swap size (${OSP_SWAP_SIZE}MiB) must be greater than ${SWAP_MIN_SIZE}MiB."
+  exit 1
 fi
 
-if [ -n "$OSP_VAR_SIZE" ]; then
-  if [ "$OSP_VAR_SIZE" -lt "$VAR_MIN_SIZE" ]; then
-    echo "var FS size (${OSP_VAR_SIZE}MiB) must be greater than ${VAR_MIN_SIZE}MiB."
-    exit 1
-  fi
+if [ "$OSP_VAR_SIZE" -lt "$VAR_MIN_SIZE" ]; then
+  echo "var FS size (${OSP_VAR_SIZE}MiB) must be greater than ${VAR_MIN_SIZE}MiB."
+  exit 1
 fi
 
 # Check minimum disk size.
