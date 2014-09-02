@@ -130,10 +130,11 @@ CLEANUP+=("rmdir $TMPDIR")
 mount $rootdev $TMPDIR
 CLEANUP+=("umount $TMPDIR")
 
-mkdir $TMPDIR/var
+VARDIR=${TMPDIR}/var
+mkdir $VARDIR
 
-mount $vardev $TMPDIR/var
-CLEAN_CACHE+=("umount $TMPDIR/var")
+mount -t ${OSP_VAR_FS} $vardev $VARDIR
+CLEANUP+=("umount $VARDIR")
 
 # remove the cache file if it's old (> 2 weeks) and writable by the owner (the
 # default due to the standard umask)
