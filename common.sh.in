@@ -19,6 +19,7 @@
 
 CLEANUP=( )
 
+declare -ri ONE_SECTOR=512
 declare -ri ONE_KIB=1024
 declare -ri ONE_MIB=$ONE_KIB*1024
 declare -ri ONE_GIB=$ONE_MIB*1024
@@ -96,28 +97,25 @@ check_minimal_sizes() {
 format_disk0() {
   blockdev="$1"
 
-  # PARTITION_ALIGNMENT is in sectors, converting it to bytes.
-  PA_BYTES=$((PARTITION_ALIGNMENT*512))
+  ROOT_SIZE_SECTORS=$((ROOT_SIZE_BYTES/ONE_SECTOR))
+  SWAP_SIZE_SECTORS=$((SWAP_SIZE_BYTES/ONE_SECTOR))
+  VAR_SIZE_SECTORS=$((VAR_SIZE_BYTES/ONE_SECTOR))
 
-  ROOT_START=$((PA_BYTES))
-  ROOT_END=$((ROOT_START+ROOT_SIZE_BYTES-1))
-  SWAP_START=$((ROOT_END+1))
-  SWAP_END=$((SWAP_START+SWAP_SIZE_BYTES-1))
-  VAR_START=$((SWAP_END+1))
-  VAR_END=$((VAR_START+VAR_SIZE_BYTES-1))
+  ROOT_START=$((PARTITION_ALIGNMENT))
+  SWAP_START=$((ROOT_START+ROOT_SIZE_SECTORS))
+  VAR_START=$((SWAP_START+SWAP_SIZE_SECTORS))
 
-  $PARTED -s $blockdev \
-mklabel $PARTITION_STYLE \
-unit B \
-mkpart primary $ROOT_START $ROOT_END \
-set 1 boot on \
-mkpart primary $SWAP_START $SWAP_END \
-mkpart primary $VAR_START $VAR_END
+  parted -s "$blockdev" mklabel $PARTITION_STYLE
 
- # $PARTED -s $blockdev mklabel $PARTITION_STYLE
- # $PARTED -s $blockdev unit B mkpart primary $ROOT_START $ROOT_END set 1 boot on
- # $PARTED -s $blockdev unit B mkpart primary $SWAP_START $SWAP_END
- # $PARTED -s $blockdev unit B mkpart primary $VAR_START $VAR_END
+  if [ "$PARTITION_STYLE" = "msdos" ]; then
+    sfdisk -H 64 -S 32 -u S --quiet --Linux "$blockdev" <<EOF
+${ROOT_START},${ROOT_SIZE_SECTORS},L,*
+${SWAP_START},${SWAP_SIZE_SECTORS},S,
+${VAR_START},${VAR_SIZE_SECTORS},L,
+EOF
+  else
+      log_error "Partition style $PARTITION_STYLE is not support
+  fi
 }
 
 map_disk0() {
