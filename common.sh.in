@@ -114,7 +114,8 @@ ${SWAP_START},${SWAP_SIZE_SECTORS},S,
 ${VAR_START},${VAR_SIZE_SECTORS},L,
 EOF
   else
-      log_error "Partition style $PARTITION_STYLE is not support
+      log_error "Partition style $PARTITION_STYLE is not supported yet."
+      exit 1
   fi
 }
 
