@@ -123,15 +123,9 @@ map_disk0() {
   blockdev="$1"
 
   # Find device base names.
-  rootdev_base=`kpartx -l -p- $blockdev | \
-                grep -m 1 -- "-1.*$blockdev" | \
-                awk '{print $1}'`
-  swapdev_base=`kpartx -l -p- $blockdev | \
-                grep -m 1 -- "-2.*$blockdev" | \
-                awk '{print $1}'`
-  vardev_base=`kpartx -l -p- $blockdev | \
-               grep -m 1 -- "-3.*$blockdev" | \
-               awk '{print $1}'`
+  rootdev_base=`kpartx -l -p- $blockdev | sort | sed -n '1p' | awk '{print $1}'`
+  swapdev_base=`kpartx -l -p- $blockdev | sort | sed -n '2p' | awk '{print $1}'`
+  vardev_base=`kpartx -l -p- $blockdev | sort | sed -n '3p' | awk '{print $1}'`
 
   # Check *dev_base validity.
   if [ -z "$rootdev_base" -o -z "$swapdev_base" -o -z "$vardev_base" ]; then
