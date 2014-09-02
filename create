@@ -55,36 +55,41 @@ fi
 # Find device size.
 DEVICE_SIZE=$(blockdev --getsize64 $blockdev)
 
+# PARTITION_ALIGNMENT is in sectors, converting it to bytes.
+PA_BYTES=$((PARTITION_ALIGNMENT*512))
+
+USABLE_SIZE=$((DEVICE_SIZE-PA_BYTES))
+
 # Compute the missing size.
-if [ "$OSP_ROOT_SIZE" -eq "0" ]; then
-    OSP_ROOT_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_SWAP_SIZE-OSP_VAR_SIZE))
-elif [ "$OSP_SWAP_SIZE" -eq "0" ]; then
-    OSP_SWAP_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_VAR_SIZE))
-elif [ "$OSP_VAR_SIZE" -eq "0" ]; then
-    OSP_VAR_SIZE=$((DEVICE_SIZE/ONE_MIB-OSP_ROOT_SIZE-OSP_SWAP_SIZE))
+if [ "$ROOT_SIZE_BYTES" -eq "0" ]; then
+    ROOT_SIZE_BYTES=$((USABLE_SIZE-SWAP_SIZE_BYTES-VAR_SIZE_BYTES))
+fi
+if [ "$SWAP_SIZE_BYTES" -eq "0" ]; then
+    SWAP_SIZE_BYTES=$((USABLE_SIZE-ROOT_SIZE_BYTES-VAR_SIZE_BYTES))
+fi
+if [ "$VAR_SIZE_BYTES" -eq "0" ]; then
+    VAR_SIZE_BYTES=$((USABLE_SIZE-ROOT_SIZE_BYTES-SWAP_SIZE_BYTES))
 fi
 
 # Check minimal sizes
-if [ "$OSP_ROOT_SIZE" -lt "$ROOT_MIN_SIZE" ]; then
-  echo "root FS size (${OSP_ROOT_SIZE}MiB) must be greater than ${ROOT_MIN_SIZE}MiB."
+if [ "$ROOT_SIZE_BYTES" -lt "$((ROOT_MIN_SIZE*ONE_MIB))" ]; then
+  echo "root FS size ($((ROOT_SIZE_BYTES/ONE_MIB))MiB) must be greater than ${ROOT_MIN_SIZE}MiB."
   exit 1
 fi
 
-if [ "$OSP_SWAP_SIZE" -lt "$SWAP_MIN_SIZE" ]; then
-  echo "swap size (${OSP_SWAP_SIZE}MiB) must be greater than ${SWAP_MIN_SIZE}MiB."
+if [ "$SWAP_SIZE_BYTES" -lt "$((SWAP_MIN_SIZE*ONE_MIB))" ]; then
+  echo "swap size ($((SWAP_SIZE_BYTES/ONE_MIB))MiB) must be greater than ${SWAP_MIN_SIZE}MiB."
   exit 1
 fi
 
-if [ "$OSP_VAR_SIZE" -lt "$VAR_MIN_SIZE" ]; then
-  echo "var FS size (${OSP_VAR_SIZE}MiB) must be greater than ${VAR_MIN_SIZE}MiB."
+if [ "$VAR_SIZE_BYTES" -lt "$((VAR_MIN_SIZE*ONE_MIB))" ]; then
+  echo "var FS size ($((VAR_SIZE_BYTES/ONE_MIB))MiB) must be greater than ${VAR_MIN_SIZE}MiB."
   exit 1
 fi
 
 # Check minimum disk size.
 
-# PARTITION_ALIGNMENT is in sectors, converting it to bytes.
-PA_BYTES=$((PARTITION_ALIGNMENT*512))
-declare -ri MIN_DEV_SIZE=$((PA_BYTES+(OSP_ROOT_FS+OSP_SWAP_SIZE+OSP_VAR_SIZE)*ONE_MIB))
+declare -ri MIN_DEV_SIZE=$((PA_BYTES+ROOT_SIZE_BYTES+SWAP_SIZE_BYTES+VAR_SIZE_BYTES))
 
 if [ "$DEVICE_SIZE" -lt $MIN_DEV_SIZE ]; then
   echo "Device size is too small ($((DEVICE_SIZE/ONE_MIB))MiB)" 1>&2
