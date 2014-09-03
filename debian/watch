@@ -1,0 +1,3 @@
+version=3
+
+http://downloads.ganeti.org/instance-debootstrap/ ganeti-instance-debootstrap-(\d+\.\d+[\d.]*)\.tar\.gz
