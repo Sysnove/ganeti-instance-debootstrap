@@ -14,3 +14,9 @@
 
 # archives
 /ganeti-instance-debootstrap-*.tar.gz
+
+# debian generated files
+debian/files
+debian/ganeti-instance-debootstrap.*
+debian/ganeti-instance-debootstrap/
+
