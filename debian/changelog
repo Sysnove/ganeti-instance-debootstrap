@@ -1,9 +1,16 @@
+ganeti-instance-debootstrap (0.15.1+dfsg-1~sysnove) UNRELEASED; urgency=medium
+
+  * Non-maintainer upload.
+  * Fixed verify script.
+
+ -- Alexis Lahouze <xals@suzanne>  Wed, 03 Sep 2014 11:54:41 +0200
+
 ganeti-instance-debootstrap (0.15+dfsg-1~sysnove) UNRELEASED; urgency=medium
 
   * Non-maintainer upload.
   * Ability to handle multiple partitions.
 
- -- Alexis Lahouze <xals@suzanne>  Tue, 02 Sep 2014 14:17:32 +0200
+ -- Alexis Lahouze <xals@suzanne>  Wed, 03 Sep 2014 11:54:41 +0200
 
 ganeti-instance-debootstrap (0.14-2) unstable; urgency=medium
 
